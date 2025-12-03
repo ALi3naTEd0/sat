@@ -54,7 +54,7 @@ def show_connection_status():
     )
 
 
-def api_request(endpoint: str, method: str = "GET", data: dict = None, files: dict = None, form_data: bool = False):
+def api_request(endpoint: str, method: str = "GET", data: dict = None, files: dict = None, form_data: bool = False, params: dict = None):
     """Make API request with authentication"""
     headers = {}
     if st.session_state.token:
@@ -64,18 +64,18 @@ def api_request(endpoint: str, method: str = "GET", data: dict = None, files: di
     
     try:
         if method == "GET":
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=headers, params=params)
         elif method == "POST":
             if files:
-                response = requests.post(url, headers=headers, data=data, files=files)
+                response = requests.post(url, headers=headers, data=data, files=files, params=params)
             elif form_data:
-                response = requests.post(url, headers=headers, data=data)
+                response = requests.post(url, headers=headers, data=data, params=params)
             else:
-                response = requests.post(url, headers=headers, json=data)
+                response = requests.post(url, headers=headers, json=data, params=params)
         elif method == "PUT":
-            response = requests.put(url, headers=headers, json=data)
+            response = requests.put(url, headers=headers, json=data, params=params)
         elif method == "DELETE":
-            response = requests.delete(url, headers=headers)
+            response = requests.delete(url, headers=headers, params=params)
         
         return response
     except requests.exceptions.ConnectionError:
