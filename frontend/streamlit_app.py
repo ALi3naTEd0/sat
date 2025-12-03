@@ -15,9 +15,32 @@ if "token" not in st.session_state:
     st.session_state.token = None
 if "user" not in st.session_state:
     st.session_state.user = None
+if "backend_status" not in st.session_state:
+    st.session_state.backend_status = None
 
 
-def api_request(endpoint: str, method: str = "GET", data: dict = None, files: dict = None):
+def check_backend_health():
+    """Check if backend is reachable"""
+    try:
+        response = requests.get(f"{API_BASE_URL.replace('/api/v1', '')}/health", timeout=2)
+        return response.status_code == 200
+    except:
+        return False
+
+
+def show_connection_status():
+    """Display connection status indicator in sidebar"""
+    is_connected = check_backend_health()
+    st.session_state.backend_status = is_connected
+    
+    with st.sidebar:
+        if is_connected:
+            st.success("🟢 **Backend Conectado**")
+        else:
+            st.error("🔴 **Backend Desconectado**")
+
+
+def api_request(endpoint: str, method: str = "GET", data: dict = None, files: dict = None, form_data: bool = False):
     """Make API request with authentication"""
     headers = {}
     if st.session_state.token:
@@ -31,6 +54,8 @@ def api_request(endpoint: str, method: str = "GET", data: dict = None, files: di
         elif method == "POST":
             if files:
                 response = requests.post(url, headers=headers, data=data, files=files)
+            elif form_data:
+                response = requests.post(url, headers=headers, data=data)
             else:
                 response = requests.post(url, headers=headers, json=data)
         elif method == "PUT":
@@ -42,11 +67,15 @@ def api_request(endpoint: str, method: str = "GET", data: dict = None, files: di
     except requests.exceptions.ConnectionError:
         st.error("⚠️ No se puede conectar al servidor. Asegúrate de que el backend esté ejecutándose.")
         return None
+    except Exception as e:
+        st.error(f"⚠️ Error: {str(e)}")
+        return None
 
 
 def login_page():
     """Login/Register page"""
     st.title("🏛️ Gestor Fiscal Personal SAT")
+    show_connection_status()
     
     tab1, tab2 = st.tabs(["Iniciar Sesión", "Registrarse"])
     
@@ -61,7 +90,7 @@ def login_page():
                 response = api_request("/auth/login", "POST", {
                     "username": email,
                     "password": password
-                })
+                }, form_data=True)
                 
                 if response and response.status_code == 200:
                     data = response.json()
@@ -89,6 +118,8 @@ def login_page():
             if submit:
                 if password != password2:
                     st.error("❌ Las contraseñas no coinciden")
+                elif len(password) < 8:
+                    st.error("❌ La contraseña debe tener al menos 8 caracteres")
                 else:
                     response = api_request("/auth/register", "POST", {
                         "email": email,
@@ -100,9 +131,20 @@ def login_page():
                     
                     if response and response.status_code == 200:
                         st.success("✅ Cuenta creada exitosamente. Por favor inicia sesión.")
+                    elif response:
+                        error_data = response.json()
+                        if isinstance(error_data.get("detail"), list):
+                            # Validation errors (422)
+                            errors = error_data["detail"]
+                            error_msg = "\n".join([f"• {e.get('msg', str(e))}" for e in errors])
+                            st.error(f"❌ Error de validación:\n{error_msg}")
+                        elif isinstance(error_data.get("detail"), str):
+                            # Simple error message (400, etc)
+                            st.error(f"❌ {error_data['detail']}")
+                        else:
+                            st.error(f"❌ Error al crear cuenta (código {response.status_code})")
                     else:
-                        error_msg = response.json().get("detail", "Error al crear cuenta") if response else "Error de conexión"
-                        st.error(f"❌ {error_msg}")
+                        st.error("❌ No se puede conectar al servidor. Verifica que el backend esté corriendo.")
 
 
 def dashboard_page():
@@ -111,6 +153,8 @@ def dashboard_page():
     
     # Sidebar
     with st.sidebar:
+        show_connection_status()
+        st.divider()
         st.write(f"👤 {st.session_state.user['first_name']} {st.session_state.user['last_name']}")
         st.write(f"📧 {st.session_state.user['email']}")
         
@@ -307,6 +351,9 @@ def main():
         page_icon="🏛️",
         layout="wide"
     )
+    
+    # Show connection status indicator
+    show_connection_status()
     
     # Check if logged in
     if st.session_state.token is None:
