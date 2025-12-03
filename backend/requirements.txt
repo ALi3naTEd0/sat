@@ -98,6 +98,9 @@ slowapi==0.1.9
 # Job Scheduling
 apscheduler==3.10.4
 
+# PDF Generation
+reportlab==4.0.9
+
 # QR Code (for CFDI)
 qrcode[pil]==8.0
 

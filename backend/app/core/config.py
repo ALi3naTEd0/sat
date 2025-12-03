@@ -73,6 +73,8 @@ class Settings(BaseSettings):
     # Automation
     PLAYWRIGHT_HEADLESS: bool = True
     PLAYWRIGHT_TIMEOUT: int = 30000
+    HEADLESS_BROWSER: bool = True
+    SELENIUM_TIMEOUT: int = 30
     
     # OCR
     OCR_ENGINE: str = "tesseract"

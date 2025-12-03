@@ -4,9 +4,15 @@
 echo "🏛️  Iniciando Gestor Fiscal SAT"
 echo ""
 
-# Kill any existing processes
+# Kill any existing processes and free ports
+echo "🧹 Limpiando procesos anteriores..."
 pkill -f "uvicorn app.main:app" 2>/dev/null
 pkill -f "streamlit run" 2>/dev/null
+
+# Force kill if still running
+lsof -ti:8000,8501 2>/dev/null | xargs kill -9 2>/dev/null
+
+sleep 2
 
 # Start backend
 echo "🚀 Iniciando Backend..."
