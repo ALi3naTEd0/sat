@@ -19,7 +19,7 @@ Sistema completo para gestionar trámites fiscales con el SAT (México). Automat
 ### Opción 1: Script Automático (Recomendado)
 
 ```bash
-git clone https://github.com/tu-usuario/sat.git
+git clone https://github.com/ALi3naTEd0/sat.git
 cd sat
 chmod +x setup.sh
 ./setup.sh
