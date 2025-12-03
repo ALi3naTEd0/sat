@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Gestor Fiscal Personal SAT - Sistema completo para gestionar trámites fiscales con el SAT (México)">
+    <meta name="keywords" content="SAT, RFC, CURP, e.firma, CFDI, gestión fiscal, México">
+    <title>Gestor Fiscal Personal SAT 🏛️</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #8B1538;
+            --secondary: #C8102E;
+            --accent: #006847;
+            --bg: #f8f9fa;
+            --text: #2c3e50;
+            --light: #ffffff;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background: var(--bg);
+        }
+
+        .hero {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: var(--light);
+            padding: 80px 20px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .hero .subtitle {
+            font-size: 1.3rem;
+            opacity: 0.95;
+            margin-bottom: 30px;
+        }
+
+        .hero .cta {
+            display: inline-block;
+            background: var(--light);
+            color: var(--primary);
+            padding: 15px 40px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin: 10px;
+        }
+
+        .hero .cta:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .hero .cta.secondary {
+            background: transparent;
+            color: var(--light);
+            border: 2px solid var(--light);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 50px;
+            color: var(--primary);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+
+        .feature-card {
+            background: var(--light);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px var(--shadow);
+            transition: transform 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-card .icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+
+        .feature-card p {
+            color: #666;
+        }
+
+        .tech-stack {
+            background: var(--light);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px var(--shadow);
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .tech-item {
+            text-align: center;
+            padding: 20px;
+            background: var(--bg);
+            border-radius: 10px;
+            transition: background 0.3s;
+        }
+
+        .tech-item:hover {
+            background: #e9ecef;
+        }
+
+        .tech-item strong {
+            display: block;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .use-cases {
+            margin: 60px 0;
+        }
+
+        .use-case {
+            background: var(--light);
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            border-left: 5px solid var(--accent);
+            box-shadow: 0 3px 10px var(--shadow);
+        }
+
+        .use-case h4 {
+            color: var(--accent);
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .use-case .emoji {
+            font-size: 1.5rem;
+            margin-right: 10px;
+        }
+
+        .footer {
+            background: var(--text);
+            color: var(--light);
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .footer a {
+            color: var(--light);
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .footer a:hover {
+            opacity: 1;
+        }
+
+        .security-badge {
+            display: inline-flex;
+            align-items: center;
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin: 10px;
+            font-weight: 600;
+        }
+
+        .security-badge::before {
+            content: "🔒";
+            margin-right: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .hero .subtitle {
+                font-size: 1rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <div class="hero">
+        <h1>🏛️ Gestor Fiscal Personal SAT</h1>
+        <p class="subtitle">La cartera fiscal digital del ciudadano mexicano 🇲🇽</p>
+        <p style="max-width: 800px; margin: 0 auto 30px; font-size: 1.1rem;">
+            Sistema completo para gestionar trámites fiscales con el SAT. 
+            Automatiza descargas de CFDIs, gestiona e.firma, RFC, CURP y mantiene organizados 
+            todos tus documentos fiscales de forma segura.
+        </p>
+        <div>
+            <a href="https://github.com/ALi3naTEd0/sat" class="cta">Ver en GitHub</a>
+            <a href="https://github.com/ALi3naTEd0/sat#-inicio-rápido" class="cta secondary">Comenzar</a>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="container">
+        <h2 class="section-title">✨ Características Principales</h2>
+        
+        <div class="features">
+            <div class="feature-card">
+                <div class="icon">🔐</div>
+                <h3>Seguridad Total</h3>
+                <p>Autenticación JWT, contraseñas hasheadas con bcrypt, y credenciales SAT encriptadas con AES-256. Tu información está protegida con los más altos estándares.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon">👤</div>
+                <h3>Perfil Fiscal Completo</h3>
+                <p>Gestiona tu RFC, CURP, régimen fiscal, obligaciones y toda tu información fiscal en un solo lugar. Mantén tu información actualizada y accesible.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon">📄</div>
+                <h3>Gestión de Documentos</h3>
+                <p>Almacena y organiza tu e.firma, constancias fiscales, CFDIs y todos tus documentos importantes. Acceso rápido cuando los necesites.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon">🤖</div>
+                <h3>Automatización Inteligente</h3>
+                <p>Descarga automática de CFDIs y constancias desde el portal del SAT usando Playwright. Ahorra tiempo en trámites repetitivos.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon">🔔</div>
+                <h3>Notificaciones</h3>
+                <p>Recibe alertas sobre vencimientos, nuevas obligaciones fiscales y fechas importantes. Nunca olvides un trámite.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon">📊</div>
+                <h3>Dashboard Intuitivo</h3>
+                <p>Interfaz moderna y fácil de usar con Streamlit. Visualiza tu situación fiscal de forma clara y accesible.</p>
+            </div>
+        </div>
+
+        <!-- Security Section -->
+        <div style="text-align: center; margin: 60px 0;">
+            <h3 style="color: var(--primary); margin-bottom: 20px;">🛡️ Seguridad Garantizada</h3>
+            <div class="security-badge">Encriptación AES-256</div>
+            <div class="security-badge">JWT con Expiración</div>
+            <div class="security-badge">Bcrypt Hashing</div>
+            <div class="security-badge">Validación Pydantic</div>
+        </div>
+
+        <!-- Use Cases Section -->
+        <h2 class="section-title">📋 Casos de Uso</h2>
+        <div class="use-cases">
+            <div class="use-case">
+                <h4><span class="emoji">🟢</span>Caso A: Usuario con e.firma y contraseña SAT</h4>
+                <p>Autenticación automática en el portal del SAT, descarga de documentos fiscales y panel completo en tiempo real con toda tu información.</p>
+            </div>
+
+            <div class="use-case">
+                <h4><span class="emoji">🟡</span>Caso B: Usuario solo con RFC</h4>
+                <p>Validación de RFC, guía paso a paso para activar tu contraseña en el SAT y asistencia para tramitar tu e.firma.</p>
+            </div>
+
+            <div class="use-case">
+                <h4><span class="emoji">🟠</span>Caso C: Usuario sin contraseña SAT</h4>
+                <p>Flujo de recuperación o creación de contraseña, OCR de INE para autocompletar datos y asistente interactivo.</p>
+            </div>
+
+            <div class="use-case">
+                <h4><span class="emoji">🔴</span>Caso D: Usuario sin RFC</h4>
+                <p>Consulta de RFC por CURP, generación de RFC guiada y todo el proceso de registro fiscal paso a paso.</p>
+            </div>
+        </div>
+
+        <!-- Tech Stack Section -->
+        <h2 class="section-title">🚀 Stack Tecnológico</h2>
+        <div class="tech-stack">
+            <div class="tech-grid">
+                <div class="tech-item">
+                    <strong>Backend</strong>
+                    <span>FastAPI + SQLAlchemy</span>
+                </div>
+                <div class="tech-item">
+                    <strong>Frontend</strong>
+                    <span>Streamlit</span>
+                </div>
+                <div class="tech-item">
+                    <strong>Base de Datos</strong>
+                    <span>PostgreSQL + Redis</span>
+                </div>
+                <div class="tech-item">
+                    <strong>Automatización</strong>
+                    <span>Playwright + Selenium</span>
+                </div>
+                <div class="tech-item">
+                    <strong>Seguridad</strong>
+                    <span>JWT + Bcrypt + Fernet</span>
+                </div>
+                <div class="tech-item">
+                    <strong>Workers</strong>
+                    <span>Celery + Redis</span>
+                </div>
+                <div class="tech-item">
+                    <strong>OCR</strong>
+                    <span>Tesseract</span>
+                </div>
+                <div class="tech-item">
+                    <strong>Storage</strong>
+                    <span>MinIO / S3</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Architecture Section -->
+        <div style="margin: 60px 0; text-align: center;">
+            <h2 class="section-title">🏗️ Arquitectura</h2>
+            <div style="background: var(--light); padding: 40px; border-radius: 15px; box-shadow: 0 5px 20px var(--shadow);">
+                <pre style="text-align: left; font-size: 1rem; color: var(--text); overflow-x: auto;">
+┌─────────────────┐      HTTP/REST      ┌──────────────────┐
+│                 │  ←─────────────────→ │                  │
+│   STREAMLIT     │    requests.post()   │    FASTAPI       │
+│   (Frontend)    │    localhost:8501    │    (Backend)     │
+│                 │                      │                  │
+└─────────────────┘                      └────────┬─────────┘
+                                                  │
+                                                  │ SQLAlchemy
+                                                  ↓
+                                         ┌─────────────────┐
+                                         │   PostgreSQL    │
+                                         │   (Base Datos)  │
+                                         └─────────────────┘
+                </pre>
+            </div>
+        </div>
+
+        <!-- CTA Section -->
+        <div style="text-align: center; margin: 80px 0;">
+            <h2 style="font-size: 2rem; margin-bottom: 20px; color: var(--primary);">
+                ¿Listo para simplificar tu gestión fiscal?
+            </h2>
+            <p style="font-size: 1.2rem; margin-bottom: 30px; color: #666;">
+                Comienza en minutos con nuestro script de instalación automática
+            </p>
+            <a href="https://github.com/ALi3naTEd0/sat" class="cta" style="background: var(--primary); color: var(--light);">
+                Ver Documentación Completa
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p style="font-size: 1.2rem; margin-bottom: 20px;">
+            <strong>Gestor Fiscal Personal SAT</strong>
+        </p>
+        <p style="margin-bottom: 20px;">
+            Hecho con ❤️ en México 🇲🇽
+        </p>
+        <p style="margin-bottom: 10px;">
+            <a href="https://github.com/ALi3naTEd0/sat">GitHub</a> •
+            <a href="https://github.com/ALi3naTEd0/sat/blob/main/README.md">Documentación</a> •
+            <a href="https://github.com/ALi3naTEd0/sat/blob/main/COMO_FUNCIONA.md">Arquitectura</a> •
+            <a href="https://github.com/ALi3naTEd0/sat/issues">Reportar Bug</a>
+        </p>
+        <p style="font-size: 0.9rem; opacity: 0.7; margin-top: 20px;">
+            ⚠️ Software para uso personal/educativo. No nos hacemos responsables del uso indebido.<br>
+            Respeta siempre las políticas del portal del SAT.
+        </p>
+        <p style="font-size: 0.9rem; opacity: 0.7; margin-top: 10px;">
+            © 2025 - Licencia MIT
+        </p>
+    </div>
+</body>
+</html>
