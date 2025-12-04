@@ -74,3 +74,14 @@ def encrypt_file(file_content: bytes) -> bytes:
 def decrypt_file(encrypted_content: bytes) -> bytes:
     """Decrypt file content"""
     return fernet.decrypt(encrypted_content)
+
+
+def encrypt_password(password: str) -> str:
+    """Encrypt password for storage (alias for encrypt_data)"""
+    return encrypt_data(password)
+
+
+def decrypt_password(encrypted_password: str) -> str:
+    """Decrypt password (alias for decrypt_data)"""
+    return decrypt_data(encrypted_password)
+

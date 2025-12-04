@@ -7,6 +7,7 @@ from app.models.fiscal_profile import FiscalProfile, TaxRegime, FiscalStatus
 from app.models.sat_credentials import SATCredentials
 from app.models.document import Document, DocumentType, DocumentStatus
 from app.models.notification import Notification, NotificationType, NotificationStatus, AuditLog, AuditAction
+from app.models.cfdi import CFDI, PrestacionAnual, TipoComprobante, CFDIStatus
 
 __all__ = [
     "Base",
@@ -25,4 +26,8 @@ __all__ = [
     "NotificationStatus",
     "AuditLog",
     "AuditAction",
+    "CFDI",
+    "PrestacionAnual",
+    "TipoComprobante",
+    "CFDIStatus",
 ]

@@ -16,6 +16,8 @@ class FiscalProfileCreate(BaseModel):
 
 
 class FiscalProfileUpdate(BaseModel):
+    rfc: Optional[str] = Field(None, min_length=12, max_length=13)
+    curp: Optional[str] = Field(None, min_length=18, max_length=18)
     legal_name: Optional[str] = None
     tax_regime: Optional[str] = None
     fiscal_address: Optional[Dict] = None

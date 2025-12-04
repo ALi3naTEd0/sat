@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 import os
 import shutil
+import logging
 
 from app.core.database import get_db
 from app.core.security import encrypt_data, decrypt_data
@@ -260,3 +261,141 @@ async def delete_sat_credentials(
         "success": True,
         "message": "Credenciales eliminadas correctamente"
     }
+
+
+@router.delete("/efirma", status_code=200)
+async def delete_efirma(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Delete only e.firma certificates, keep SAT password"""
+    
+    sat_creds = db.query(SATCredentials).filter(
+        SATCredentials.user_id == current_user.id
+    ).first()
+    
+    if not sat_creds:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No credentials found"
+        )
+    
+    # Delete e.firma files
+    try:
+        user_cred_dir = os.path.join(CREDENTIALS_STORAGE, f"user_{current_user.id}")
+        if os.path.exists(user_cred_dir):
+            # Delete specific files
+            cer_path = os.path.join(user_cred_dir, "certificate.cer")
+            key_path = os.path.join(user_cred_dir, "key.key")
+            if os.path.exists(cer_path):
+                os.remove(cer_path)
+            if os.path.exists(key_path):
+                os.remove(key_path)
+    except Exception as e:
+        print(f"Error deleting e.firma files: {str(e)}")
+    
+    # Update database - remove e.firma info
+    sat_creds.has_efirma = False
+    sat_creds.efirma_cer_path = None
+    sat_creds.efirma_key_path = None
+    sat_creds.encrypted_efirma_password = None
+    sat_creds.efirma_expiry = None
+    sat_creds.updated_at = datetime.utcnow()
+    
+    db.commit()
+    db.refresh(sat_creds)
+    
+    return {
+        "success": True,
+        "message": "e.firma eliminada correctamente. Contraseña SAT conservada."
+    }
+
+
+@router.get("/validate")
+async def validate_credentials(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Validate SAT credentials by attempting login"""
+    from app.services.sat_scraper import SATScraper
+    from app.models.fiscal_profile import FiscalProfile
+    
+    # Get credentials
+    credentials = db.query(SATCredentials).filter(
+        SATCredentials.user_id == current_user.id
+    ).first()
+    
+    if not credentials or not credentials.encrypted_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No hay credenciales configuradas"
+        )
+    
+    # Get RFC
+    fiscal_profile = db.query(FiscalProfile).filter(
+        FiscalProfile.user_id == current_user.id
+    ).first()
+    
+    if not fiscal_profile or not fiscal_profile.rfc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="RFC no configurado en el perfil fiscal"
+        )
+    
+    # Decrypt password
+    try:
+        sat_password = decrypt_data(credentials.encrypted_password)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al descifrar contraseña: {str(e)}"
+        )
+    
+    # Try to login (headless=False para debug - ver el navegador)
+    try:
+        async with SATScraper(rfc=fiscal_profile.rfc, password=sat_password, headless=False) as scraper:
+            success = await scraper.login()
+            
+            if success:
+                # Capturar y guardar cookies de sesión
+                session_cookies = scraper.get_session_cookies()
+                if session_cookies:
+                    import json
+                    credentials.sat_session_token = json.dumps(session_cookies)
+                    logging.info(f"Saved {len(session_cookies)} session cookies")
+                
+                # Update last validated
+                credentials.last_validated = datetime.utcnow()
+                db.commit()
+                
+                return {
+                    "valid": True,
+                    "rfc": fiscal_profile.rfc,
+                    "message": "✅ Conexión exitosa con el portal SAT",
+                    "session_saved": bool(session_cookies)
+                }
+            else:
+                return {
+                    "valid": False,
+                    "message": "⚠️ No se pudo validar las credenciales. El portal del SAT requiere autenticación adicional (posiblemente e.firma válida o CAPTCHA). Revisa que tu e.firma no esté vencida."
+                }
+    except Exception as e:
+        # Return the actual error from SAT with context
+        error_msg = str(e)
+        
+        # Provide helpful messages based on error
+        if "campos requeridos" in error_msg.lower():
+            friendly_msg = "⚠️ El portal del SAT requiere campos adicionales. Posibles causas:\n\n• Tu e.firma está vencida (debe renovarse en el SAT)\n• El portal requiere CAPTCHA o verificación adicional\n• Las credenciales son incorrectas\n\nPara descargar tus CFDIs manualmente: https://portalcfdi.facturaelectronica.sat.gob.mx"
+        elif "certificado" in error_msg.lower() and "renovado" in error_msg.lower():
+            friendly_msg = "🔒 Tu e.firma (certificado digital) está VENCIDA. Debes renovarla en una oficina del SAT.\n\nMás información: https://www.sat.gob.mx/tramites/16703/obten-tu-certificado-de-e.firma"
+        elif "timeout" in error_msg.lower():
+            friendly_msg = "⏱️ El portal del SAT no respondió a tiempo. Puede estar temporalmente fuera de servicio. Intenta nuevamente en unos minutos."
+        else:
+            friendly_msg = f"❌ Error al conectar con el SAT:\n\n{error_msg}\n\nVerifica tus credenciales en: https://www.sat.gob.mx"
+        
+        return {
+            "valid": False,
+            "message": friendly_msg,
+            "technical_error": error_msg
+        }
+

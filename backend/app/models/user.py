@@ -57,6 +57,8 @@ class User(Base):
     sat_credentials = relationship("SATCredentials", back_populates="user", uselist=False)
     notifications = relationship("Notification", back_populates="user")
     audit_logs = relationship("AuditLog", back_populates="user")
+    cfdis = relationship("CFDI", back_populates="user")
+    prestaciones = relationship("PrestacionAnual", back_populates="user")
     
     def __repr__(self):
         return f"<User {self.email}>"

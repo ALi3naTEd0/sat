@@ -31,10 +31,14 @@ async def get_fiscal_profile(
     ).first()
     
     if not fiscal_profile:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Fiscal profile not found. Please create one first."
+        # Create empty profile automatically
+        fiscal_profile = FiscalProfile(
+            user_id=current_user.id,
+            curp=current_user.curp
         )
+        db.add(fiscal_profile)
+        db.commit()
+        db.refresh(fiscal_profile)
     
     return fiscal_profile
 
@@ -104,7 +108,22 @@ async def update_fiscal_profile(
             detail="Fiscal profile not found"
         )
     
+    # Check if RFC is being changed and if it's already in use
+    if profile_update.rfc is not None and profile_update.rfc != fiscal_profile.rfc:
+        existing_rfc = db.query(FiscalProfile).filter(
+            FiscalProfile.rfc == profile_update.rfc,
+            FiscalProfile.id != fiscal_profile.id
+        ).first()
+        if existing_rfc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="RFC already registered by another user"
+            )
+        fiscal_profile.rfc = profile_update.rfc
+    
     # Update fields
+    if profile_update.curp is not None:
+        fiscal_profile.curp = profile_update.curp
     if profile_update.legal_name is not None:
         fiscal_profile.legal_name = profile_update.legal_name
     if profile_update.tax_regime is not None:
@@ -146,12 +165,144 @@ async def lookup_curp(
 ):
     """Lookup RFC by CURP"""
     
-    # TODO: Implement CURP lookup
-    # - Connect to RENAPO or SAT API
+    # Validate CURP format
+    curp = curp_data.curp.upper()
+    if len(curp) != 18:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="CURP debe tener 18 caracteres"
+        )
+    
+    # Extract RFC from CURP (first 10 characters for persons, or 12 for legal entities)
+    # For natural persons, RFC = first 10 chars of CURP + homoclave (2 chars)
+    # Since we don't have the homoclave, we return the base RFC
+    rfc_base = curp[:10]
+    
+    return {
+        "success": True,
+        "curp": curp,
+        "rfc": rfc_base,
+        "message": "RFC base obtenido del CURP. Necesitarás agregar la homoclave (2 dígitos finales).",
+        "note": "El RFC completo consta de: " + rfc_base + "XX (donde XX es tu homoclave)"
+    }
     # - Retrieve RFC if exists
     
     return {
         "curp": curp_data.curp,
         "rfc": None,
         "message": "CURP lookup not fully implemented yet"
+    }
+
+
+# Prestaciones endpoints
+from app.services.prestaciones_calculator import PrestacionesCalculator
+from pydantic import BaseModel
+from typing import Optional
+
+
+class PrestacionesResponse(BaseModel):
+    year: int
+    ingresos: dict
+    deducciones: dict
+    impuestos: dict
+    base_gravable: float
+    total_cfdis: int
+    ultimo_calculo: Optional[str]
+
+
+@router.get("/prestaciones/{year}", response_model=PrestacionesResponse)
+async def get_prestaciones(
+    year: int,
+    recalcular: bool = False,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get prestaciones (income and deductions) for a specific year
+    """
+    from app.models import PrestacionAnual
+    
+    # Get or calculate prestaciones
+    prestacion = db.query(PrestacionAnual).filter(
+        PrestacionAnual.user_id == current_user.id,
+        PrestacionAnual.year == year
+    ).first()
+    
+    if not prestacion or recalcular:
+        # Calculate/recalculate
+        calculator = PrestacionesCalculator(db)
+        prestacion = calculator.calculate_year(current_user.id, year)
+    
+    return PrestacionesResponse(
+        year=prestacion.year,
+        ingresos={
+            'total': float(prestacion.total_ingresos),
+            'sueldos': float(prestacion.ingresos_sueldos),
+            'actividad_empresarial': float(prestacion.ingresos_actividad_empresarial),
+            'arrendamiento': float(prestacion.ingresos_arrendamiento),
+            'intereses': float(prestacion.ingresos_intereses),
+            'otros': float(prestacion.otros_ingresos)
+        },
+        deducciones={
+            'total': float(prestacion.total_deducciones),
+            'gastos_medicos': float(prestacion.gastos_medicos),
+            'intereses_hipotecarios': float(prestacion.intereses_hipotecarios),
+            'educacion': float(prestacion.educacion),
+            'seguros': float(prestacion.seguros),
+            'transporte_escolar': float(prestacion.transporte_escolar),
+            'donativos': float(prestacion.donativos),
+            'otras': float(prestacion.otras_deducciones)
+        },
+        impuestos={
+            'isr_retenido': float(prestacion.isr_retenido),
+            'isr_pagado': float(prestacion.isr_pagado),
+            'iva_pagado': float(prestacion.iva_pagado)
+        },
+        base_gravable=float(prestacion.base_gravable),
+        total_cfdis=prestacion.total_cfdis,
+        ultimo_calculo=prestacion.ultimo_calculo.isoformat() if prestacion.ultimo_calculo else None
+    )
+
+
+@router.get("/prestaciones/{year}/monthly")
+async def get_monthly_breakdown(
+    year: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get monthly income breakdown for a year
+    """
+    calculator = PrestacionesCalculator(db)
+    monthly_data = calculator.get_monthly_breakdown(current_user.id, year)
+    
+    return {
+        'year': year,
+        'monthly': monthly_data
+    }
+
+
+@router.get("/deducciones/{year}")
+async def get_deducciones_detalle(
+    year: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get detailed deductions breakdown by category
+    """
+    calculator = PrestacionesCalculator(db)
+    breakdown = calculator.get_deduction_breakdown(current_user.id, year)
+    
+    # Calculate totals
+    totals = {
+        category: sum(cfdi['total'] for cfdi in cfdis)
+        for category, cfdis in breakdown.items()
+    }
+    
+    return {
+        'year': year,
+        'breakdown': breakdown,
+        'totals': totals,
+        'total_general': sum(totals.values())
     }
