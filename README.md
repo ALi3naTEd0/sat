@@ -59,12 +59,15 @@ sudo pacman -S postgresql redis python libxml2 libxslt
 ## Ubuntu/Debian
 sudo apt install postgresql redis libxml2-dev libxslt1-dev
 
-# 2. Iniciar servicios (solo Linux)
+# 2. Iniciar servicios
+## Linux
 sudo systemctl start postgresql redis
 sudo systemctl enable postgresql redis
 
-# 3. Crear base de datos
+## Windows (con WSL2 o servicios nativos)
+# PostgreSQL y Redis deben iniciarse automáticamente al instalar
 
+# 3. Crear base de datos
 ## macOS
 createuser -s $USER  # No requiere sudo
 createdb sat_db
@@ -73,17 +76,48 @@ createdb sat_db
 sudo -u postgres createuser -s $USER
 createdb sat_db
 
+## Windows (CMD o PowerShell como Administrador)
+# Asegúrate de tener PostgreSQL en PATH
+createuser -U postgres -s %USERNAME%
+createdb -U postgres sat_db
+
 # 4. Configurar variables de entorno
+## macOS/Linux
 cp .env.example .env
 nano .env  # Editar DATABASE_URL, generar claves
 
+## Windows
+copy .env.example .env
+notepad .env  # Editar DATABASE_URL, generar claves
+
 # 5. Crear entorno virtual e instalar dependencias
+## macOS/Linux
 python -m venv .venv
 source .venv/bin/activate
 pip install -r backend/requirements.txt
 
+## Windows (CMD)
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r backend\requirements.txt
+
+## Windows (PowerShell)
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r backend\requirements.txt
+
 # 6. ¡Iniciar! (las tablas se crean automáticamente)
+## macOS/Linux
 ./scripts/start.sh
+
+## Windows
+# Backend
+cd backend
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# Frontend (en otra terminal)
+cd frontend
+streamlit run app.py --server.port 8501
 ```
 
 **Nota:** Las tablas de la base de datos se crean automáticamente al iniciar el backend. No necesitas ejecutar scripts adicionales.
