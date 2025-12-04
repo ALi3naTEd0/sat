@@ -1,6 +1,6 @@
 # 🏛️ Gestor Fiscal Personal SAT
 
-Sistema completo para gestionar trámites fiscales con el SAT (México). Automatiza descargas de CFDIs, gestiona e.firma, RFC, CURP y mantiene organizados todos tus documentos fiscales.
+Sistema completo para gestionar trámites fiscales con el SAT (México). Automatiza descargas de CFDIs usando la **API oficial del SAT** (Web Services SOAP), gestiona e.firma, RFC, CURP y mantiene organizados todos tus documentos fiscales.
 
 **La cartera fiscal digital del ciudadano mexicano** 🇲🇽
 
@@ -9,8 +9,9 @@ Sistema completo para gestionar trámites fiscales con el SAT (México). Automat
 - 🔐 **Autenticación segura** con JWT y bcrypt
 - 👤 **Gestión de perfil fiscal** (RFC, CURP, régimen fiscal)
 - 📄 **Almacenamiento de documentos** (e.firma, constancias, CFDIs)
-- 🔒 **Encriptación de credenciales SAT** con AES-256
-- 🤖 **Automatización con Playwright** (descarga CFDIs, constancias)
+- 🔒 **Encriptación de credenciales** con AES-256
+- 🌐 **Web Services oficiales del SAT** - Descarga masiva de CFDIs con e.firma
+- 📦 **Procesamiento automático** de paquetes ZIP y parseo de XMLs (CFDI 3.3 y 4.0)
 - 🔔 **Notificaciones** de vencimientos y obligaciones fiscales
 - 📊 **Dashboard intuitivo** con Streamlit
 
@@ -21,19 +22,17 @@ Sistema completo para gestionar trámites fiscales con el SAT (México). Automat
 ```bash
 git clone https://github.com/ALi3naTEd0/sat.git
 cd sat
-chmod +x setup.sh
-./setup.sh
+chmod +x scripts/setup.sh
+./scripts/setup.sh
 ```
 
 El script instalará todo automáticamente. Luego solo ejecuta:
 
 ```bash
-./start.sh
+./scripts/start.sh
 ```
 
 Abre: **http://localhost:8501**
-
-> **⚠️ Usuarios de macOS:** Si encuentras errores con PostgreSQL durante la instalación, consulta [MACOS_TROUBLESHOOTING.md](MACOS_TROUBLESHOOTING.md) para soluciones específicas.
 
 ### Opción 2: Instalación Manual
 
@@ -83,39 +82,20 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r backend/requirements.txt
 
-# 6. Crear tablas
-cd backend
-python create_tables.py
-cd ..
-
-# 7. Instalar navegadores (opcional)
-playwright install chromium
-
-# 8. ¡Iniciar!
-./start.sh
+# 6. ¡Iniciar! (las tablas se crean automáticamente)
+./scripts/start.sh
 ```
 
-## 📋 Casos de Uso
+**Nota:** Las tablas de la base de datos se crean automáticamente al iniciar el backend. No necesitas ejecutar scripts adicionales.
 
-### 🟢 Caso A: Usuario con e.firma y contraseña SAT
-- Autenticación automática
-- Descarga de documentos fiscales
-- Panel completo en tiempo real
+## 🔑 Requisitos para Sincronización SAT
 
-### 🟡 Caso B: Usuario solo con RFC
-- Validación de RFC
-- Guía para activar contraseña SAT
-- Guía para tramitar e.firma
+Para descargar CFDIs del SAT necesitas:
+- ✅ **RFC** configurado en tu perfil fiscal
+- ✅ **e.firma** (.cer + .key + contraseña)
 
-### 🟠 Caso C: Usuario sin contraseña SAT
-- Flujo de recuperación/creación de contraseña
-- OCR de INE para autocompletar
-- Asistente paso a paso
-
-### 🔴 Caso D: Usuario sin RFC
-- Consulta por CURP
-- Generación de RFC guiada
-- Prellenado inteligente de formularios
+### ¿Cómo obtener tu e.firma?
+Si no tienes e.firma, puedes tramitarla en: https://www.sat.gob.mx/tramites/16703/obten-tu-certificado-de-e-firma-portabilidad
 
 ## 🔐 Seguridad
 
@@ -125,28 +105,44 @@ playwright install chromium
 - Auditoría de accesos
 - Cumplimiento GDPR/LFPDPPP
 
-## 📱 Funcionalidades Core
+## 📱 Funcionalidades
 
-1. **Identidad Fiscal**: RFC, CURP, Régimen, Obligaciones
-2. **Documentos**: Almacenamiento cifrado de e.firma, constancias, INE
-3. **CFDI**: Descarga automática de facturas emitidas/recibidas
-4. **Declaraciones**: Historial y recordatorios
-5. **Alertas**: Notificaciones de obligaciones y vencimientos
-6. **Situación Fiscal**: Opinión del cumplimiento en tiempo real
+### ✅ Implementadas
+- 🔐 Autenticación y gestión de usuarios
+- 👤 Perfiles fiscales (RFC, CURP, régimen)
+- 📄 Gestión de documentos y e.firma
+- 🌐 Sincronización con Web Services SAT (descarga masiva)
+- 📦 Procesamiento automático de CFDIs
+- 📊 Dashboard fiscal con estadísticas
+- 🧾 Visualización y gestión de facturas
 
-## 🎯 MVP Roadmap
+### 🚧 En Desarrollo
+- 📋 Declaraciones y prellenado automático
+- 🔔 Sistema de alertas y recordatorios
+- 📈 Análisis fiscal avanzado
 
-**Mes 1**: Backend + Autenticación + Gestión de usuarios
-**Mes 2**: Automatización SAT + Gestión de documentos
-**Mes 3**: App móvil + Panel fiscal + Alertas
+## 🏗️ Arquitectura
 
----
+```
+├── backend/          # FastAPI + PostgreSQL
+│   ├── app/
+│   │   ├── api/      # Endpoints REST
+│   │   ├── models/   # Modelos SQLAlchemy
+│   │   ├── services/ # Lógica de negocio
+│   │   └── core/     # Config y seguridad
+│   └── alembic/      # Migraciones DB
+├── frontend/         # Streamlit UI
+├── scripts/          # Scripts de utilidad
+└── docs/             # Documentación (GitHub Pages)
+```
 
-## 🛠️ Instalación
+## 🔧 Stack Tecnológico
 
-Ver documentación específica en cada módulo:
-- [Backend Setup](./backend/README.md)
-- [Automation Setup](./automation/README.md)
+- **Backend**: FastAPI, SQLAlchemy, PostgreSQL, Redis
+- **Frontend**: Streamlit
+- **Seguridad**: JWT, bcrypt, AES-256
+- **Web Services**: Zeep (SOAP client), cryptography (e.firma)
+- **Procesamiento**: lxml (XML parsing)
 
 ## 📄 Licencia
 
