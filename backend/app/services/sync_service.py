@@ -122,7 +122,14 @@ class SATSyncService:
             logger.info(f"e.firma loaded successfully - RFC: {efirma_service.get_rfc()}")
             
             # Initialize Web Service client
-            ws_client = SATWebServiceClient(efirma_service)
+            try:
+                ws_client = SATWebServiceClient(efirma_service)
+            except ConnectionError as conn_error:
+                raise ValueError(
+                    f"No se pudo conectar a los servicios del SAT. "
+                    f"Verifica tu conexión a internet e intenta de nuevo. "
+                    f"Detalles: {str(conn_error)}"
+                )
             
             # Calculate date range (using date objects, not datetime)
             end_date = date.today()

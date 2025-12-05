@@ -61,21 +61,30 @@ class SATWebServiceClient:
         
         Args:
             efirma_service: Servicio de e.firma configurado
+        
+        Raises:
+            ConnectionError: Si no se puede conectar a los servicios del SAT
         """
         self.efirma = efirma_service
         
-        # Configurar transporte HTTP con timeout
-        session = Session()
-        session.verify = True
-        transport = Transport(session=session, timeout=30)
-        
-        # Configurar zeep con opciones
-        settings = Settings(strict=False, xml_huge_tree=True)
-        
-        # Inicializar clientes SOAP
-        self.client_solicita = Client(WSDL_SOLICITA_DESCARGA, settings=settings, transport=transport)
-        self.client_verifica = Client(WSDL_VERIFICA_SOLICITUD, settings=settings, transport=transport)
-        self.client_descarga = Client(WSDL_DESCARGA_MASIVA, settings=settings, transport=transport)
+        try:
+            # Configurar transporte HTTP con timeout
+            session = Session()
+            session.verify = True
+            transport = Transport(session=session, timeout=30)
+            
+            # Configurar zeep con opciones
+            settings = Settings(strict=False, xml_huge_tree=True)
+            
+            # Inicializar clientes SOAP
+            self.client_solicita = Client(WSDL_SOLICITA_DESCARGA, settings=settings, transport=transport)
+            self.client_verifica = Client(WSDL_VERIFICA_SOLICITUD, settings=settings, transport=transport)
+            self.client_descarga = Client(WSDL_DESCARGA_MASIVA, settings=settings, transport=transport)
+        except Exception as e:
+            raise ConnectionError(
+                f"No se pudo conectar a los Web Services del SAT. "
+                f"Verifica tu conexión a internet. Error: {str(e)}"
+            )
     
     def _create_auth_header(self) -> Dict[str, Any]:
         """
