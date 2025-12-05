@@ -44,9 +44,9 @@ class CFDI(Base):
     tipo_comprobante = Column(SQLEnum(TipoComprobante), nullable=False, index=True)
     
     # Fechas
-    fecha_emision = Column(DateTime, nullable=False, index=True)
-    fecha_timbrado = Column(DateTime, nullable=False)
-    fecha_certificacion = Column(DateTime)
+    fecha_emision = Column(DateTime(timezone=True), nullable=False, index=True)
+    fecha_timbrado = Column(DateTime(timezone=True), nullable=False)
+    fecha_certificacion = Column(DateTime(timezone=True))
     
     # Emisor
     emisor_rfc = Column(String(13), nullable=False, index=True)

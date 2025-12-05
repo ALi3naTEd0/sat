@@ -284,17 +284,18 @@ class SATSyncService:
         
         # Parse dates from XML strings to datetime objects
         def parse_sat_date(date_str):
-            """Parse SAT date string to naive datetime object (no timezone)"""
+            """Parse SAT date string to timezone-aware datetime object (UTC)"""
             if not date_str:
                 return None
             try:
                 # SAT dates come as ISO format: "2024-12-04T10:30:00"
                 dt = date_parser.parse(date_str)
-                # ALWAYS convert to naive datetime (remove timezone info)
-                # This ensures compatibility with CFDI model which uses DateTime without timezone
-                if dt.tzinfo is not None:
-                    # Convert to UTC then remove timezone
-                    dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+                # ALWAYS ensure timezone-aware (add UTC if missing)
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+                else:
+                    # Convert to UTC
+                    dt = dt.astimezone(timezone.utc)
                 return dt
             except Exception as e:
                 logger.warning(f"Failed to parse date '{date_str}': {e}")
@@ -316,16 +317,6 @@ class SATSyncService:
         # Determine tipo comprobante
         tipo_comp = cfdi_data.get('tipo_comprobante', 'I')
         
-        # Parse and validate dates are naive
-        fecha_em = parse_sat_date(cfdi_data.get('fecha'))
-        fecha_tim = parse_sat_date(cfdi_data.get('fecha_timbrado'))
-        
-        # Double-check: ensure dates are naive (no timezone)
-        if fecha_em and fecha_em.tzinfo is not None:
-            fecha_em = fecha_em.replace(tzinfo=None)
-        if fecha_tim and fecha_tim.tzinfo is not None:
-            fecha_tim = fecha_tim.replace(tzinfo=None)
-        
         # Create CFDI record
         cfdi = CFDI(
             user_id=self.user_id,
@@ -334,9 +325,8 @@ class SATSyncService:
             folio=cfdi_data.get('folio'),
             version=cfdi_data.get('version'),
             tipo_comprobante=TipoComprobante(tipo_comp),
-            fecha_emision=fecha_em,
-            fecha_timbrado=fecha_tim,
-            fecha_certificacion=None,  # Explicitly set to avoid any default issues
+            fecha_emision=parse_sat_date(cfdi_data.get('fecha')),
+            fecha_timbrado=parse_sat_date(cfdi_data.get('fecha_timbrado')),
             emisor_rfc=cfdi_data.get('emisor', {}).get('rfc'),
             emisor_nombre=cfdi_data.get('emisor', {}).get('nombre'),
             emisor_regimen_fiscal=cfdi_data.get('emisor', {}).get('regimen_fiscal'),
