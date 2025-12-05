@@ -1126,14 +1126,13 @@ def show_sat_credentials():
                 with col2:
                     key_file = st.file_uploader("Llave .key", type=["key"])
                 
-                # Mostrar campo de contraseña siempre, pero deshabilitado si no hay archivos
+                # Campo de contraseña siempre habilitado
                 efirma_password = st.text_input(
-                    "Contraseña e.firma (obligatoria)",
+                    "Contraseña e.firma",
                     type="password",
                     key="efirma_pwd",
-                    disabled=not (cer_file and key_file),
-                    help="Necesaria para usar Web Services del SAT" if not (cer_file and key_file) else None,
-                    placeholder="Primero sube los archivos .cer y .key" if not (cer_file and key_file) else "Ingresa tu contraseña"
+                    help="Contraseña de tu e.firma (obligatoria si subes archivos)",
+                    placeholder="Ingresa la contraseña de tu e.firma"
                 )
                 
                 submit = st.form_submit_button("💾 Guardar y Continuar", type="primary", use_container_width=True)
