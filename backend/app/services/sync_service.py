@@ -232,7 +232,11 @@ class SATSyncService:
             # Update sync record
             sync_record.status = SyncStatus.COMPLETED
             sync_record.completed_at = datetime.now(timezone.utc)
-            sync_record.duration_seconds = int((sync_record.completed_at - sync_record.started_at).total_seconds())
+            # Calculate duration safely
+            try:
+                sync_record.duration_seconds = int((sync_record.completed_at - sync_record.started_at).total_seconds())
+            except:
+                sync_record.duration_seconds = 0  # Fallback if comparison fails
             sync_record.results = results
             self.db.commit()
             
@@ -271,12 +275,16 @@ class SATSyncService:
         
         # Parse dates from XML strings to datetime objects
         def parse_sat_date(date_str):
-            """Parse SAT date string to datetime object"""
+            """Parse SAT date string to naive datetime object (no timezone)"""
             if not date_str:
                 return None
             try:
                 # SAT dates come as ISO format: "2024-12-04T10:30:00"
-                return date_parser.parse(date_str)
+                dt = date_parser.parse(date_str)
+                # Convert to naive datetime (remove timezone info)
+                if dt.tzinfo is not None:
+                    dt = dt.replace(tzinfo=None)
+                return dt
             except:
                 return None
         
