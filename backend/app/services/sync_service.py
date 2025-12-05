@@ -98,7 +98,14 @@ class SATSyncService:
                     "and password in the Credentials section."
                 )
             
-            efirma_password = decrypt_data(self.credentials.encrypted_efirma_password)
+            try:
+                efirma_password = decrypt_data(self.credentials.encrypted_efirma_password)
+            except Exception as decrypt_error:
+                logger.error(f"Failed to decrypt e.firma password: {decrypt_error}")
+                raise ValueError(
+                    "No se pudo desencriptar la contraseña de e.firma. "
+                    "Por favor, vuelve a subir tus archivos y contraseña en la sección de Credenciales."
+                )
             
             # Initialize e.firma service
             efirma_service = EfirmaService(
