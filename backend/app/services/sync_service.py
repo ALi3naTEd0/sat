@@ -117,8 +117,8 @@ class SATSyncService:
             # Initialize Web Service client
             ws_client = SATWebServiceClient(efirma_service)
             
-            # Calculate date range
-            end_date = datetime.now()
+            # Calculate date range (using date objects, not datetime)
+            end_date = date.today()
             start_date = end_date - timedelta(days=months_back * 30)
             
             logger.info(f"Requesting CFDIs from {start_date} to {end_date}")
@@ -220,11 +220,11 @@ class SATSyncService:
                 
             # Mark as completed
             results['status'] = SyncStatus.COMPLETED
-            results['completed_at'] = datetime.now().isoformat()
+            results['completed_at'] = datetime.utcnow().isoformat()
             
             # Update sync record
             sync_record.status = SyncStatus.COMPLETED
-            sync_record.completed_at = datetime.now()
+            sync_record.completed_at = datetime.utcnow()
             sync_record.duration_seconds = int((sync_record.completed_at - sync_record.started_at).total_seconds())
             sync_record.results = results
             self.db.commit()
@@ -238,7 +238,7 @@ class SATSyncService:
             results['error'] = str(e)
             
             sync_record.status = SyncStatus.FAILED
-            sync_record.completed_at = datetime.now()
+            sync_record.completed_at = datetime.utcnow()
             sync_record.error_message = str(e)
             self.db.commit()
             
@@ -248,7 +248,7 @@ class SATSyncService:
             results['error'] = str(e)
             
             sync_record.status = SyncStatus.FAILED
-            sync_record.completed_at = datetime.now()
+            sync_record.completed_at = datetime.utcnow()
             sync_record.error_message = str(e)
             self.db.commit()
             
