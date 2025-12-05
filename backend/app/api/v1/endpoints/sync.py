@@ -70,14 +70,18 @@ async def start_sync(
         
         # Start sync in background
         import asyncio
+        import logging
+        
+        logger = logging.getLogger(__name__)
         
         async def run_sync():
             try:
+                logger.info(f"Starting sync for user {current_user.id}")
                 results = await sync_service.sync_all(months_back=request.months_back)
-                # TODO: Store results in database for status tracking
-                print(f"Sync completed: {results}")
+                logger.info(f"Sync completed successfully: {results}")
             except Exception as e:
-                print(f"Sync error: {str(e)}")
+                logger.error(f"Sync error for user {current_user.id}: {str(e)}", exc_info=True)
+                # Error is already saved in sync_service.sync_all()
         
         # Add to background tasks
         background_tasks.add_task(lambda: asyncio.run(run_sync()))

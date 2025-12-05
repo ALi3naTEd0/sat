@@ -233,23 +233,25 @@ class SATSyncService:
             
         except ValueError as e:
             # Configuration errors (missing e.firma, etc.)
-            logger.error(f"Configuration error: {str(e)}")
+            error_msg = str(e) if str(e) else "Configuration error (no details provided)"
+            logger.error(f"Configuration error: {error_msg}", exc_info=True)
             results['status'] = SyncStatus.FAILED
-            results['error'] = str(e)
+            results['error'] = error_msg
             
             sync_record.status = SyncStatus.FAILED
             sync_record.completed_at = datetime.utcnow()
-            sync_record.error_message = str(e)
+            sync_record.error_message = error_msg
             self.db.commit()
             
         except Exception as e:
-            logger.error(f"Sync error: {str(e)}")
+            error_msg = str(e) if str(e) else f"Unexpected error: {type(e).__name__}"
+            logger.error(f"Sync error: {error_msg}", exc_info=True)
             results['status'] = SyncStatus.FAILED
-            results['error'] = str(e)
+            results['error'] = error_msg
             
             sync_record.status = SyncStatus.FAILED
             sync_record.completed_at = datetime.utcnow()
-            sync_record.error_message = str(e)
+            sync_record.error_message = error_msg
             self.db.commit()
             
         return results
