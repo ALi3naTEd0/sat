@@ -1,7 +1,7 @@
 """
 API Endpoints - SAT Credentials Management
 """
-from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form
 from sqlalchemy.orm import Session
 from datetime import datetime
 import os
@@ -128,11 +128,11 @@ async def update_sat_credentials(
 async def upload_efirma(
     cer_file: UploadFile = File(...),
     key_file: UploadFile = File(...),
-    efirma_password: str = None,
+    efirma_password: str = Form(...),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Upload e.firma certificates (.cer and .key files)"""
+    """Upload e.firma certificates (.cer and .key files) - Password is required"""
     
     ensure_storage_exists()
     
@@ -176,9 +176,7 @@ async def upload_efirma(
         sat_creds.efirma_cer_path = cer_path
         sat_creds.efirma_key_path = key_path
         sat_creds.has_efirma = True
-        
-        if efirma_password:
-            sat_creds.encrypted_efirma_password = encrypt_data(efirma_password)
+        sat_creds.encrypted_efirma_password = encrypt_data(efirma_password)
         
         sat_creds.updated_at = datetime.utcnow()
         db.commit()

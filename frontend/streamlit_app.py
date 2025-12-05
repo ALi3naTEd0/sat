@@ -1123,14 +1123,17 @@ def show_sat_credentials():
                 with col2:
                     key_file = st.file_uploader("Llave .key", type=["key"])
                 
+                efirma_password = None
                 if cer_file and key_file:
-                    efirma_password = st.text_input("Contraseña e.firma", type="password")
+                    efirma_password = st.text_input("Contraseña e.firma (obligatoria)", type="password", key="efirma_pwd")
                 
                 submit = st.form_submit_button("💾 Guardar y Continuar", type="primary", use_container_width=True)
                 
                 if submit:
                     if not sat_password:
                         st.error("❌ Necesitas ingresar tu contraseña del SAT")
+                    elif cer_file and key_file and not efirma_password:
+                        st.error("❌ Si subes archivos e.firma, la contraseña es obligatoria")
                     else:
                         # Save SAT password
                         save_response = api_request("/credentials/sat", "POST", {
@@ -1142,12 +1145,12 @@ def show_sat_credentials():
                             st.success("✅ Contraseña guardada")
                             
                             # Upload e.firma if provided
-                            if cer_file and key_file:
+                            if cer_file and key_file and efirma_password:
                                 files = {
                                     "cer_file": cer_file,
                                     "key_file": key_file
                                 }
-                                data = {"efirma_password": efirma_password} if efirma_password else {}
+                                data = {"efirma_password": efirma_password}
                                 
                                 efirma_response = api_request("/credentials/efirma/upload", "POST", data=data, files=files)
                                 if efirma_response and efirma_response.status_code in [200, 201]:
